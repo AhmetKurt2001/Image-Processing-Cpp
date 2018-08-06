@@ -1,0 +1,143 @@
+#include <opencv2\opencv.hpp>
+#include <opencv2\imgproc.hpp>
+#include <opencv2\highgui.hpp>
+#include <opencv2\core\core.hpp>
+#include <iostream>
+
+using namespace std;
+using namespace cv;
+
+const char* filename = "C:/Users/asus/Desktop/Serval/renkler/colors.png";
+Mat img = imread(filename);
+int satir = img.rows;
+int sutun = img.cols;
+
+void rgb2hsl(Mat resim);
+int sirala(Mat res);
+
+
+int main()
+{
+	//8U nun anlamı 8 bit resim demek
+	//C3 un anlamı 3 kanallı yani uc rengin karisimindan resim olustur demek
+	//bu renkler kirmizi, yesil ve mavidir
+
+	Mat as = img;
+	rgb2hsl(as);
+
+
+	//char resimYazisi[60]; //yazilacak resim icin karakter dizisi olusturuluyor 
+	//_snprintf_s(resimYazisi, 60, "Merhaba Dunya");
+
+	//3. parametre yazinin yazdirilacagi konum
+	//4. parametre yazi fontu
+	//5. parametre yazi punto buyuklugu
+	//6. parametre yazi rengi
+	//putText(img, resimYazisi, Point(50, 240), CV_FONT_HERSHEY_COMPLEX, 2, Scalar(255, 255, 255));
+	namedWindow("Merhaba", CV_WINDOW_AUTOSIZE); //merhaba isimli windows penceresi oluştu
+
+	imshow("Merhaba", img); //oluşan renk pencerede gösteriliyor
+
+
+	waitKey(0); //herhangi bir tuşa basınca program kapanıyor					
+	return 0;
+}
+
+int sirala(Mat res) {
+
+
+
+
+	return 0;
+}
+
+void rgb2hsl(Mat resGel) {
+	Mat maxChannel, minChannel;
+	Mat resim = resGel;
+	maxChannel = resim;
+	minChannel = resim;
+
+	int smallestV = 255,biggestV=0,minInd=0,maxInd=0,ortaInd=0;
+
+	for (int i = 0; i < resim.rows; i++)
+	{
+		for (int j = 0; j < resim.cols; j++)
+		{
+
+			Vec3b bgrPixel = resim.at<Vec3b>(i, j);
+			int blue = bgrPixel.val[0];
+			int green = bgrPixel.val[1];
+			int red = bgrPixel.val[2];
+
+			for (int k = 0; k <= 2; k++) {
+				if (bgrPixel.val[k] < smallestV) {
+					smallestV = bgrPixel.val[k];
+					minInd = k;
+				}
+
+			}
+
+			for (int k = 0; k <= 2; k++) {
+				if (bgrPixel.val[k] > biggestV) {
+					biggestV = bgrPixel.val[k];
+					maxInd = k;
+				}
+
+			}
+			
+			smallestV = 255, biggestV = 0;
+
+			if ((minInd==1 || minInd == 2)&& (maxInd == 1 || maxInd == 2))
+			{
+				ortaInd = 3;
+			}
+			else if ((minInd == 2 || minInd == 3) && (maxInd == 2 || maxInd == 3))
+			{
+				ortaInd = 1;
+			}
+			else if ((minInd == 1 || minInd == 3) && (maxInd == 1 || maxInd == 3))
+			{
+				ortaInd = 2;
+			}
+
+			maxChannel.at<Vec3b>(i, j) = { bgrPixel.val[minInd], bgrPixel.val[ortaInd], bgrPixel.val[maxInd] };
+			
+			//minChannel.at<int>(0, 0) = smallestV;
+
+			//		cout << "Intensity = " << endl << " " << blue << " " << green << " " << red << endl << endl;
+
+
+		}
+	}
+
+
+			// do something with BGR values...
+
+
+
+			
+
+	
+}
+/*
+void test(void) {
+
+	Mat temp, minChannel, bgr[3];
+
+	for (int i = 0; i<100; i++)
+	{
+		for (int j = 0; j<bgr.cols; j++)
+		{
+			bgr.at<Vec3b>(i, j)[0] = 0;
+			bgr.at<Vec3b>(i, j)[1] = 200;
+			bgr.at<Vec3b>(i, j)[2] = 0;
+		}
+	}
+	min(bgr[0], bgr[1], temp);           //find minimum between B and G channels
+	min(temp, bgr[2], minChannel);       //find minimum between temp and R channels
+
+
+
+	
+}
+*/
