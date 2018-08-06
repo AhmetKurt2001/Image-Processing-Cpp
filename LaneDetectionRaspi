@@ -1,0 +1,326 @@
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+void help()
+{
+	cout << "\nThis program demonstrates line finding with the Hough transform.\n"
+		"Usage:\n"
+		"./houghlines <image_name>, Default is pic1.jpg\n" << endl;
+}
+
+
+
+
+int main(int argc, char** argv)
+{
+	const char* filename = argc >= 2 ? argv[1] : "/home/pi/Downloads/f00003.png";
+
+	Mat src = imread(filename, 0);
+	if (src.empty())
+	{
+		help();
+		cout << "can not open " << filename << endl;
+		return -1;
+	}
+
+	blur(src,src,Size(3,3));
+	Mat dst, cdst;
+	Canny(src, dst, 50, 200, 3);
+	cvtColor(dst, cdst, CV_GRAY2BGR);
+	
+	int satir = src.rows;
+	int sutun = src.cols;
+	
+	cout<<"satir: "<<satir<<endl;
+	cout<<"sutun: "<<sutun<<endl;
+	cout<<"---------------"<<endl;
+	int ortaNokta =round(sutun/2);
+
+	int sira1 = 0;
+	int sira2 = 0;
+
+	Point ptr1,ptr2;
+	Point ptr12, ptr22;
+
+	line(cdst, Point(ortaNokta,1), Point(ortaNokta,satir), Scalar(255, 0, 0), 1, CV_AA);
+
+#if 0
+
+/*
+	vector<Vec2f> lines;
+	HoughLines(dst, lines, 1, CV_PI / 180, 100, 0, 0);
+
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		float rho = lines[i][0], theta = lines[i][1];
+		Point pt1, pt2;
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		pt1.x = cvRound(x0 + 1000 * (-b));
+		pt1.y = cvRound(y0 + 1000 * (a));
+		pt2.x = cvRound(x0 - 1000 * (-b));
+		pt2.y = cvRound(y0 - 1000 * (a));
+		
+		int isP=0;
+		if(pt1.y>pt2.y){
+			 isP=pt1.y;
+		}
+		else{
+			 isP=pt2.x;
+		}
+
+		int fark = abs(ortaNokta - isP);
+
+
+		if (fark<maxV )
+		{
+			maxV = pt2.x;
+			ptr1.x = pt1.x;
+			ptr1.y = pt1.y;
+			ptr2.x = pt2.x;
+			ptr2.y = pt2.y;
+			sira1 = i;
+		}
+		
+
+		//line(cdst, pt1, pt2, Scalar(0, 0, 255), 3, CV_AA);
+	}
+
+	
+	 maxV = sutun * 5;
+	 
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		float rho = lines[i][0], theta = lines[i][1];
+		Point pt1, pt2;
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		pt1.x = cvRound(x0 + 1000 * (-b));
+		pt1.y = cvRound(y0 + 1000 * (a));
+		pt2.x = cvRound(x0 - 1000 * (-b));
+		pt2.y = cvRound(y0 - 1000 * (a));
+		
+		
+		int isP=0;
+
+		if(pt1.x>pt2.x){
+			 isP=pt1.x;
+		}
+		else{
+			 isP=pt2.x;
+		}
+
+		int fark = abs(ortaNokta - isP);
+		int fark2=abs(ptr1.x-ptr12.x);
+		int fark3=abs(ptr1.x-ptr22.x);
+		int fark4=abs(ptr2.x-ptr12.x);
+		int fark5=abs(ptr2.x-ptr22.x);
+		
+		if (fark<maxV && i!=sira1 &&(fark2>10 && fark3>10 && fark4>10 &&fark5>10))
+		{
+			maxV = pt2.x;
+			ptr12.x = pt1.x;
+			ptr12.y = pt1.y;
+			ptr22.x = pt2.x;
+			ptr22.y = pt2.y;
+			sira2 = i;
+		}
+
+		
+		//line(cdst, pt1, pt2, Scalar(0, 0, 255), 3, CV_AA);
+	}
+
+
+	line(cdst, ptr1, Point(1,1), Scalar(0, 0, 255), 5, CV_AA);
+
+	//line(cdst, ptr12, ptr22, Scalar(0, 255, 0), 1, CV_AA);
+
+
+*/
+
+
+#else
+
+	
+	double maxV=100000;
+	vector<Vec4i> lines;
+	HoughLinesP(dst, lines, 1, CV_PI / 180, 50, 30, 20);
+	
+	
+		cout << "Size1: " << lines.size() << endl;
+	
+	
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		Vec4i l = lines[i];
+		
+		double sonuc1=sqrt((l[0]-ortaNokta)*(l[0]-ortaNokta)+(l[1]-satir)*(l[1]-satir));	
+		double sonuc2=sqrt((l[2]-ortaNokta)*(l[2]-ortaNokta)+(l[3]-satir)*(l[3]-satir));	
+		
+		double egim=abs(l[1]-l[3]);
+
+		if(sonuc1<maxV && egim>10){
+			maxV=sonuc1;
+			sira1=i;
+		}
+		else if(sonuc2 < maxV && egim>10)
+		{
+			maxV=sonuc2;
+			sira1=i;
+		}
+
+	}
+	cout<<"sorun yok 1"<<endl;
+	Vec4i t = lines[sira1];
+	double eg1=double(t[0]-t[2])/double(t[1]-t[3]);
+	
+	cout<<"sorun yok 2"<<endl;
+	
+	int ustKoseL=0;
+	int altKoseL=0;
+	int ustKoseT=0;
+	int altKoseT=0;
+	
+	maxV=100000;
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		Vec4i l = lines[i];
+		
+		double sonuc1=sqrt((l[0]-ortaNokta)*(l[0]-ortaNokta)+(l[1]-satir)*(l[1]-satir));	
+		double sonuc2=sqrt((l[2]-ortaNokta)*(l[2]-ortaNokta)+(l[3]-satir)*(l[3]-satir));	
+		
+		if(l[1]<l[3])
+		{
+			ustKoseL=l[0];	
+			altKoseL=l[2];
+		}
+		else{
+			ustKoseL=l[2];	
+			altKoseL=l[0];
+
+		}
+		
+		if(t[1]<t[3])
+		{
+			ustKoseT=t[0];	
+			altKoseT=t[2];	
+		}
+		else{
+			ustKoseT=t[2];	
+			altKoseT=t[0];	
+		}
+		
+		int ustFark=abs(ustKoseL-ustKoseT);	
+		int altFark=abs(altKoseL-altKoseT);	
+		
+		double egim=abs(l[1]-l[3]);
+		
+		double eg2=double(l[0]-l[2])/double(l[1]-l[3]);
+		cout<<"sorun yok 2"<<endl;
+
+		if(sonuc1<maxV && egim>10&&sira1!=i && ustFark+25<altFark && ustFark>10 && altFark>20){
+			if((eg1 > 0 && eg2<0)||(eg1 < 0 && eg2>0)){
+			maxV=sonuc1;
+			sira2=i;
+			cout<<"sorun yok 3"<<endl;
+			}
+			else{
+			continue;
+		    cout<<"sorun yok 2"<<endl;
+			}
+		}
+		else if(sonuc2 < maxV && egim>10 && sira1!=i && ustFark+25<altFark && ustFark>10 && altFark>20)
+		{	cout<<"sorun yok 21"<<endl;
+
+			if((eg1>0 && eg2<0)||(eg1<0 && eg2>0)){
+			maxV=sonuc2;
+			sira2=i;
+			cout<<"sorun yok 4"<<endl;
+			}
+			else{
+			continue;
+			cout<<"sorun yok else"<<endl;
+			}
+		}
+
+	}
+	
+	Vec4i p = lines[sira1];
+	Vec4i k = lines[sira2];
+		
+		 int res1=abs(p[0]-ortaNokta);	
+		 int res2=abs(p[2]-ortaNokta);	
+	cout<<"sorun yok 5"<<endl;
+
+		Vec4i p2;
+		p2[0]=ortaNokta+res1;
+		p2[1]=p[1];
+		
+		p2[2]=ortaNokta+res2;
+		p2[3]=p[3];
+		
+
+		
+		line(cdst, Point(p[0], p[1]), Point(p[2], p[3]), Scalar(0, 0, 255), 3, CV_AA);
+		line(cdst, Point(k[0], k[1]), Point(k[2], k[3]), Scalar(0, 0, 255), 3, CV_AA);
+	
+	
+	
+	
+	
+	
+	
+	
+/*
+	maxV=100000;
+	for (size_t i = 0; i < lines.size(); i++)
+	{
+		Vec4i l = lines[i];
+		
+		double sonuc1=sqrt((l[0]-ortaNokta)*(l[0]-ortaNokta)+(l[1]-satir)*(l[1]-satir));	
+		double sonuc2=sqrt((l[2]-ortaNokta)*(l[2]-ortaNokta)+(l[3]-satir)*(l[3]-satir));	
+		double egim=(l[1]-l[3]);
+		
+		Vec4i k = lines[sira1];
+
+		int fark1=abs(k[0]-l[0]);
+		int fark2=abs(k[0]-l[1]);
+
+		if(sonuc1<maxV && i!=sira1 && egim>10 && (fark1>20 || fark2>20)){
+			maxV=sonuc1;
+			sira2=i;
+		}
+		else if(sonuc2<maxV && i!=sira1 && egim>10&& (fark1>20 || fark2>20))
+		{
+			maxV=sonuc2;
+			sira2=i;
+		}
+		
+	
+	}
+	
+	
+	
+	Vec4i l = lines[sira1];
+	Vec4i t = lines[sira2];
+	line(cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0, 0, 255), 3, CV_AA);
+	line(cdst, Point(t[0], t[1]), Point(t[2], t[3]), Scalar(0, 255, 0), 3, CV_AA);
+*/
+
+#endif
+	
+	namedWindow("source",CV_WINDOW_FREERATIO);
+	namedWindow("detected lines",CV_WINDOW_FREERATIO);
+
+
+	imshow("source", src);
+	imshow("detected lines", cdst);
+
+	waitKey();
+
+	return 0;
+}
